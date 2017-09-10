@@ -64,7 +64,60 @@ def addInfo(conn):
     print("\"" + name + "\" Added to Database.")
     return 'a' #success
 
-print("Welcome to the Friends Database Interface!")
+def getInfo(conn):
+    print("\nApplicable options are: W - Whole Database, I - Individual's Data")
+    resp = prompt("What would you like to view? ", "wi")
+
+    #Whole Database
+    if(resp == 'w'):
+        try:
+            c = conn.execute("SELECT id, name, dob, address FROM friends")
+        except Error as e:
+            print(e)
+            print("Failed to get data from the database...")
+
+        print("")
+        for row in c:
+            print("Entry #" + str(row[0]))
+            print("Name........" + row[1])
+            print("DOB........." + row[2])
+            print("Address....." + row[3])
+            print("")
+
+    #Individual's Data
+    elif(resp == 'i'):
+        while resp == 'i':
+            resp = input("\nWho would you like to get information on? ")
+            if(resp == 'q'):
+                return 'q'
+
+            try:
+                c = conn.execute("SELECT id, name, dob, address FROM friends WHERE name == \'" + resp + "\'")
+
+            except Error as e:
+                print(e)
+                print("Failed to get data from the database...")
+
+            num = 0
+            print("")
+            for row in c:
+                print("Entry #" + str(row[0]))
+                print("Name........" + row[1])
+                print("DOB........." + row[2])
+                print("Address....." + row[3])
+                print("")
+                num += 1;
+
+            if(num == 0):
+                print("Invalid name...")
+                resp = 'i'
+
+
+    #Quitting
+    else:
+        return "q"
+
+print("\n__Welcome to the Friends Database Interface!__")
 print("(Enter Q to quit at individual letter prompts)\n")
 
 conn = sqlite3.connect('db\myFriends.db')
@@ -78,23 +131,14 @@ while True:
         print("\nUpdate Info Options:")
 
     elif(resp == 'g'):
-        print("\nGet Info Options:")
+        if(getInfo(conn) == 'q'):
+            break
 
     elif(resp == 'a'):
         if(addInfo(conn) == 'q'):
-            break;
+            break
 
     else:
         break
-
-cur = conn.execute("SELECT name, dob, address FROM friends")
-
-print("")
-
-for row in cur:
-    print("Name: " + row[0])
-    print("DOB: " + row[1])
-    print("Address: " + row[2])
-    print("")
 
 conn.close()
