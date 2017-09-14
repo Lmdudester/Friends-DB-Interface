@@ -117,6 +117,139 @@ def getInfo(conn):
     else:
         return "q"
 
+def updateTime(conn, resp, name, prsnid):
+    #Name
+    if(resp == 'n'):
+        newName =  input("New first and last name for " + name + "? ")
+        if newName == 'q':
+            return 'q' #user quit
+
+        #By Id
+        if(prsnid != -1):
+            conn.execute("UPDATE friends SET name = \'" + newName + "\' WHERE id = \'" + str(prsnid) + "\';")
+            conn.commit()
+            print("\"" + name + "\" updated to \"" + newName +"\" in Database.")
+            return 'u' #success
+
+        #By name
+        else:
+            conn.execute("UPDATE friends SET name = \'" + newName + "\' WHERE name = \'" + name + "\';" )
+            conn.commit()
+            print("\"" + name + "\" updated to \"" + newName +"\" in Database.")
+            return 'u' #success
+
+    #Address
+    elif(resp == 'a'):
+        address =  input("New address for " + name + "? ")
+        if address == 'q':
+            return 'q' #user quit
+
+        #By Id
+        if(prsnid != -1):
+            conn.execute("UPDATE friends SET address = \'" + address + "\' WHERE id = \'" + str(prsnid) + "\';")
+            conn.commit()
+            print("\"" + name + "'s\" address updated to \"" + address + "\" in Database.")
+            return 'u' #success
+
+        #By name
+        else:
+            conn.execute("UPDATE friends SET address = \'" + address + "\' WHERE name = \'" + name + "\';")
+            conn.commit()
+            print("\"" + name + "'s\" address updated to \"" + address + "\" in Database.")
+            return 'u' #success
+
+    #Date of birth
+    elif(resp == 'd'):
+        dob = input("Date of birth? (YYYY-MM-DD) ")
+        if dob == 'q':
+            return 'q' #user quit
+
+        #By Id
+        if(prsnid != -1):
+            try:
+                conn.execute("UPDATE friends SET dob = \'" + dob + "\' WHERE id = \'" + str(prsnid) + "\';")
+                conn.commit()
+            except Error as e:
+                print(e)
+                print("Failed to enter data into the database...")
+                return 'f'
+
+            print("\"" + name + "'s\" dob updated to \"" + dob + "\" in Database.")
+            return 'u' #success
+
+        #By name
+        else:
+            try:
+                conn.execute("UPDATE friends SET dob = \'" + dob + "\' WHERE name = \'" + name + "\';")
+                conn.commit()
+            except Error as e:
+                print(e)
+                print("Failed to enter data into the database...")
+                return 'f'
+
+            print("\"" + name + "'s\" dob updated to \"" + dob + "\" in Database.")
+            return 'u' #success
+
+    else:
+        return 'q'
+
+def updateInfo(conn):
+    print("\nApplicable options are: N - by Name, E - by Entry Number")
+    resp = prompt("How would you like to find the person? ", "ne")
+
+    #Find by Name
+    if(resp == 'n'):
+        name = input("First and last name? ")
+        if(name == 'q'):
+            return 'q'
+        c = conn.execute("SELECT name, count(*) as num FROM friends WHERE name = \'" + name + "\';")
+
+        row = c.fetchone()
+
+        while(row[1] != 1):
+            print("\nInvalid or duplicate name, try again or press q to quit.")
+            name = input("First and last name? ")
+            if(name == 'q'):
+                return 'q'
+            c = conn.execute("SELECT count(*) as num FROM friends WHERE name = \'" + name + "\';")
+            row = c.fetchone()
+
+        print("\nApplicable options are: N - Name, A - Address, D - DOB")
+        resp = prompt("What would you like to update? ", "nad")
+
+        resp = updateTime(conn, resp, row[0], -1)
+
+        return resp
+
+    #Find by Entry Number
+    elif(resp == 'e'):
+        prsnid = input("Entry Number? ")
+        if(prsnid == 'q'):
+            return 'q'
+        c = conn.execute("SELECT name, count(*) as num FROM friends WHERE id = \'" + prsnid + "\';")
+
+        row = c.fetchone()
+
+        while(row[1] != 1):
+            print("\nInvalid or duplicate name, try again or press q to quit.")
+            prsnid = input("First and last name? ")
+            if(prsnid == 'q'):
+                return 'q'
+            c = conn.execute("SELECT count(*) as num FROM friends WHERE id = \'" + prsnid + "\';")
+            row = c.fetchone()
+
+        print("\nApplicable options are: N - Name, A - Address, D - DOB")
+        resp = prompt("What would you like to update? ", "nad")
+
+        resp = updateTime(conn, resp, row[0], prsnid)
+
+        return resp
+
+    #Quitting
+    else:
+        return q
+
+
 print("\n__Welcome to the Friends Database Interface!__")
 print("(Enter Q to quit at individual letter prompts)\n")
 
@@ -128,7 +261,8 @@ while True:
     resp = prompt("What would you like to do? ", "uga")
 
     if(resp == 'u'):
-        print("\nUpdate Info Options:")
+        if(updateInfo(conn) == 'q'):
+            break
 
     elif(resp == 'g'):
         if(getInfo(conn) == 'q'):
